@@ -11,14 +11,21 @@
             </div>
             <div class="card-body p-0">
                 <ul class="list-group list-group-flush">
-                    {% for job in matched_jobs %}
+                    {% for match in matched_jobs %}
                         <li class="list-group-item d-flex justify-content-between align-items-center p-4 hover-shadow">
                             <div>
-                                <h6 class="mb-1 fw-bold text-primary">{{ job.title }}</h6>
-                                <small class="text-muted d-block mb-2">{{ job.recruiter.display_name }}</small>
-                                <small class="bg-light p-1 rounded border text-muted">Matches: {{ job.required_skills }}</small>
+                                <h6 class="mb-1 fw-bold text-primary">{{ match.job.title }}</h6>
+                                <small class="text-muted d-block mb-2">{{ match.job.recruiter.display_name }} | {{ match.job.category.name }}</small>
+                                <div class="d-flex flex-wrap gap-1">
+                                    {% for skill in match.matched_skills %}
+                                        <span class="badge bg-success">{{ skill|title }}</span>
+                                    {% endfor %}
+                                </div>
+                                <small class="text-muted d-block mt-2">
+                                    {{ match.match_count }} skill{{ match.match_count|pluralize }} matched from your profile
+                                </small>
                             </div>
-                            <a href="{% url 'job-detail' job.id %}" class="btn btn-sm btn-success px-3">View Job</a>
+                            <a href="{% url 'job-detail' match.job.id %}" class="btn btn-sm btn-success px-3">View Job</a>
                         </li>
                     {% empty %}
                         <li class="list-group-item text-center text-muted py-5">
@@ -43,6 +50,9 @@
                             <strong class="d-block text-dark">{{ app.job.title }}</strong>
                             <small class="text-muted d-block mb-1">{{ app.job.recruiter.display_name }}</small>
                             <small class="text-success fw-bold">Applied: {{ app.applied_at|date:"M d, Y" }}</small>
+                            <span class="badge bg-{% if app.status == 'accepted' %}success{% elif app.status == 'rejected' %}danger{% else %}warning text-dark{% endif %} d-inline-block mt-2">
+                                {{ app.get_status_display }}
+                            </span>
                         </li>
                     {% empty %}
                         <li class="list-group-item text-center text-muted py-5">

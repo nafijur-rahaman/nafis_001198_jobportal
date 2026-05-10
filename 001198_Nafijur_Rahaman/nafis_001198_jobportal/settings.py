@@ -2,7 +2,6 @@
 
 import os
 from pathlib import Path
-from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -49,7 +48,7 @@ ROOT_URLCONF = 'nafis_001198_jobportal.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -115,5 +114,7 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 # ADD THESE TWO LINES FOR RENDER
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 LOGIN_URL = 'login'
 AUTH_USER_MODEL = 'portal.CustomUser'
