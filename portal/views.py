@@ -7,12 +7,13 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.db.models import Q
 from django.db import transaction
+from django.db.models.deletion import ProtectedError
 from django.views.decorators.http import require_POST
 
-from .models import JobPost, JobApplication, JobSeekerProfile
+from .models import JobPost, JobApplication, JobCategory, JobSeekerProfile
 from .forms import (
     CustomUserRegistrationForm, UserLoginForm, 
-    RecruiterProfileForm, JobSeekerProfileForm, JobPostForm, UserProfileForm
+    RecruiterProfileForm, JobSeekerProfileForm, JobCategoryForm, JobPostForm, UserProfileForm
 )
 
 
@@ -21,6 +22,9 @@ def split_skills(skill_text):
 
 
 def register_user(request):
+    if request.user.is_authenticated:
+        return redirect('job-list')
+
     if request.method == 'POST':
         form = CustomUserRegistrationForm(request.POST)
         if form.is_valid():
@@ -33,6 +37,9 @@ def register_user(request):
     return render(request, 'portal/register.html', {'form': form})
 
 def login_user(request):
+    if request.user.is_authenticated:
+        return redirect('job-list')
+
     if request.method == 'POST':
         form = UserLoginForm(request, data=request.POST)
         if form.is_valid():
@@ -221,6 +228,63 @@ def reject_application(request, application_id):
     return redirect('application-detail', application_id=application.id)
 
 # --- CRUD CLASS BASED VIEWS ---
+class StaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
+    def test_func(self):
+        return self.request.user.is_staff
+
+    def handle_no_permission(self):
+        if not self.request.user.is_authenticated:
+            return super().handle_no_permission()
+        messages.error(self.request, "Only staff users can manage categories.")
+        return redirect('job-list')
+
+
+class JobCategoryListView(StaffRequiredMixin, ListView):
+    model = JobCategory
+    template_name = 'portal/category_list.html'
+    context_object_name = 'categories'
+
+    def get_queryset(self):
+        return JobCategory.objects.prefetch_related('jobs').order_by('name')
+
+
+class JobCategoryCreateView(StaffRequiredMixin, CreateView):
+    model = JobCategory
+    form_class = JobCategoryForm
+    template_name = 'portal/category_form.html'
+    success_url = reverse_lazy('category-list')
+
+    def form_valid(self, form):
+        messages.success(self.request, "Category added successfully.")
+        return super().form_valid(form)
+
+
+class JobCategoryUpdateView(StaffRequiredMixin, UpdateView):
+    model = JobCategory
+    form_class = JobCategoryForm
+    template_name = 'portal/category_form.html'
+    success_url = reverse_lazy('category-list')
+
+    def form_valid(self, form):
+        messages.success(self.request, "Category updated successfully.")
+        return super().form_valid(form)
+
+
+class JobCategoryDeleteView(StaffRequiredMixin, DeleteView):
+    model = JobCategory
+    template_name = 'portal/category_confirm_delete.html'
+    success_url = reverse_lazy('category-list')
+
+    def form_valid(self, form):
+        try:
+            response = super().form_valid(form)
+        except ProtectedError:
+            messages.error(self.request, "This category cannot be deleted because it has job posts.")
+            return redirect('category-list')
+        messages.success(self.request, "Category deleted successfully.")
+        return response
+
+
 class JobListView(ListView):
     model = JobPost
     template_name = 'portal/job_list.html'

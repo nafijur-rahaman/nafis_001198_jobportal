@@ -12,6 +12,12 @@ urlpatterns = [
     
     # Dashboards
     path('dashboard/', views.dashboard, name='dashboard'),
+
+    # Category crud
+    path('categories/', views.JobCategoryListView.as_view(), name='category-list'),
+    path('categories/new/', views.JobCategoryCreateView.as_view(), name='category-create'),
+    path('categories/<int:pk>/update/', views.JobCategoryUpdateView.as_view(), name='category-update'),
+    path('categories/<int:pk>/delete/', views.JobCategoryDeleteView.as_view(), name='category-delete'),
     
     # Job crud
     path('', views.JobListView.as_view(), name='job-list'), 

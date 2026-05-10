@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from .models import CustomUser, RecruiterProfile, JobSeekerProfile, JobPost
+from .models import CustomUser, RecruiterProfile, JobSeekerProfile, JobCategory, JobPost
 
 
 class CustomUserRegistrationForm(UserCreationForm):
@@ -61,6 +61,15 @@ class JobSeekerProfileForm(forms.ModelForm):
         widgets = {
             'skills_set': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Python, Django, HTML'}),
             'resume': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+        }
+
+
+class JobCategoryForm(forms.ModelForm):
+    class Meta:
+        model = JobCategory
+        fields = ['name']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
         }
 
 
