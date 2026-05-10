@@ -4,7 +4,7 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="fw-bold">Available Opportunities</h2>
     {% if user.role == 'recruiter' %}
-        <a href="{% url 'job-create' %}" class="btn btn-primary">+ Post New Job</a>
+        <a href="{% url 'job-create' %}" class="btn btn-primary">Post New Job</a>
     {% endif %}
 </div>
 
@@ -12,7 +12,7 @@
     <div class="col-md-12">
         <form method="GET" class="card shadow-sm border-0 p-3">
             <div class="input-group">
-                <input type="text" name="q" class="form-control form-control-lg" placeholder="Search jobs by title, category, or skills..." value="{{ request.GET.q }}">
+                <input type="text" name="q" class="form-control form-control-sm" placeholder="Search jobs by title, category, or skills..." value="{{ request.GET.q }}">
                 <button class="btn btn-dark px-4" type="submit">Search</button>
                 {% if request.GET.q %}
                     <a href="{% url 'job-list' %}" class="btn btn-outline-secondary">Clear</a>
