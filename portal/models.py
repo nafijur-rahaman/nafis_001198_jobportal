@@ -64,17 +64,20 @@ class JobApplication(models.Model):
     def accept(self):
         if self.status == self.STATUS_ACCEPTED:
             return True
-        self.job.refresh_from_db(fields=['number_of_openings'])
-        if self.job.number_of_openings < 1:
-            return False
+        if self.status == self.STATUS_REJECTED:
+            self.job.refresh_from_db(fields=['number_of_openings'])
+            if self.job.number_of_openings < 1:
+                return False
+            self.job.number_of_openings -= 1
+            self.job.save(update_fields=['number_of_openings'])
         self.status = self.STATUS_ACCEPTED
-        self.job.number_of_openings -= 1
-        self.job.save(update_fields=['number_of_openings'])
         self.save(update_fields=['status'])
         return True
 
     def reject(self):
-        if self.status == self.STATUS_ACCEPTED:
+        if self.status == self.STATUS_REJECTED:
+            return True
+        if self.status in {self.STATUS_PENDING, self.STATUS_ACCEPTED}:
             self.job.number_of_openings += 1
             self.job.save(update_fields=['number_of_openings'])
         self.status = self.STATUS_REJECTED

@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django.db.models import Q
+from django.db import transaction
 from django.views.decorators.http import require_POST
 
 from .models import JobPost, JobApplication, JobSeekerProfile
@@ -164,17 +165,60 @@ def apply_for_job(request, job_id):
         messages.error(request, "Only job seekers can apply.")
         return redirect('job-list')
 
-    job = get_object_or_404(JobPost, id=job_id)
-    if job.number_of_openings < 1:
-        messages.error(request, "This job has no open positions left.")
-        return redirect('job-detail', pk=job.id)
+    with transaction.atomic():
+        job = get_object_or_404(JobPost.objects.select_for_update(), id=job_id)
+        if JobApplication.objects.filter(job=job, applicant=request.user).exists():
+            messages.info(request, "You already applied for this job.")
+            return redirect('job-detail', pk=job.id)
 
-    if not JobApplication.objects.filter(job=job, applicant=request.user).exists():
+        if job.number_of_openings < 1:
+            messages.error(request, "This job has no open positions left.")
+            return redirect('job-detail', pk=job.id)
+
         JobApplication.objects.create(job=job, applicant=request.user)
+        job.number_of_openings -= 1
+        job.save(update_fields=['number_of_openings'])
         messages.success(request, f"Applied for {job.title}!")
-    else:
-        messages.info(request, "You already applied for this job.")
     return redirect('job-detail', pk=job.id)
+
+
+@login_required
+def application_detail(request, application_id):
+    application = get_object_or_404(
+        JobApplication.objects.select_related('job', 'applicant', 'applicant__jobseeker_profile'),
+        id=application_id,
+        job__recruiter=request.user,
+    )
+    profile_obj = getattr(application.applicant, 'jobseeker_profile', None)
+    profile_skills = []
+    if profile_obj:
+        profile_skills = [skill.strip() for skill in profile_obj.skills_set.split(',') if skill.strip()]
+
+    return render(request, 'portal/application_detail.html', {
+        'application': application,
+        'profile_obj': profile_obj,
+        'profile_skills': profile_skills,
+    })
+
+
+@login_required
+@require_POST
+def accept_application(request, application_id):
+    application = get_object_or_404(JobApplication, id=application_id, job__recruiter=request.user)
+    if application.accept():
+        messages.success(request, "Application accepted.")
+    else:
+        messages.error(request, "No open positions are available for this job.")
+    return redirect('application-detail', application_id=application.id)
+
+
+@login_required
+@require_POST
+def reject_application(request, application_id):
+    application = get_object_or_404(JobApplication, id=application_id, job__recruiter=request.user)
+    application.reject()
+    messages.success(request, "Application rejected.")
+    return redirect('application-detail', application_id=application.id)
 
 # --- CRUD CLASS BASED VIEWS ---
 class JobListView(ListView):
