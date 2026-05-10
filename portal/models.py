@@ -23,7 +23,6 @@ class JobCategory(models.Model):
 
     class Meta:
         ordering = ['name']
-        verbose_name_plural = 'job categories'
 
     def __str__(self):
         return self.name

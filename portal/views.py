@@ -227,19 +227,19 @@ def reject_application(request, application_id):
     messages.success(request, "Application rejected.")
     return redirect('application-detail', application_id=application.id)
 
-# --- CRUD CLASS BASED VIEWS ---
-class StaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
+
+class RecruiterRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     def test_func(self):
-        return self.request.user.is_staff
+        return self.request.user.role == 'recruiter'
 
     def handle_no_permission(self):
         if not self.request.user.is_authenticated:
             return super().handle_no_permission()
-        messages.error(self.request, "Only staff users can manage categories.")
+        messages.error(self.request, "Only recruiters can manage categories.")
         return redirect('job-list')
 
 
-class JobCategoryListView(StaffRequiredMixin, ListView):
+class JobCategoryListView(RecruiterRequiredMixin, ListView):
     model = JobCategory
     template_name = 'portal/category_list.html'
     context_object_name = 'categories'
@@ -248,7 +248,7 @@ class JobCategoryListView(StaffRequiredMixin, ListView):
         return JobCategory.objects.prefetch_related('jobs').order_by('name')
 
 
-class JobCategoryCreateView(StaffRequiredMixin, CreateView):
+class JobCategoryCreateView(RecruiterRequiredMixin, CreateView):
     model = JobCategory
     form_class = JobCategoryForm
     template_name = 'portal/category_form.html'
@@ -259,7 +259,7 @@ class JobCategoryCreateView(StaffRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
-class JobCategoryUpdateView(StaffRequiredMixin, UpdateView):
+class JobCategoryUpdateView(RecruiterRequiredMixin, UpdateView):
     model = JobCategory
     form_class = JobCategoryForm
     template_name = 'portal/category_form.html'
@@ -270,7 +270,7 @@ class JobCategoryUpdateView(StaffRequiredMixin, UpdateView):
         return super().form_valid(form)
 
 
-class JobCategoryDeleteView(StaffRequiredMixin, DeleteView):
+class JobCategoryDeleteView(RecruiterRequiredMixin, DeleteView):
     model = JobCategory
     template_name = 'portal/category_confirm_delete.html'
     success_url = reverse_lazy('category-list')

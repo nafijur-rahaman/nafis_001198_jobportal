@@ -14,7 +14,7 @@
                         <div class="mb-3">
                             <div class="d-flex justify-content-between align-items-center">
                                 <label class="form-label fw-bold">{{ field.label }}</label>
-                                {% if field.name == 'category' and user.is_staff %}
+                                {% if field.name == 'category' and user.role == 'recruiter' %}
                                     <a href="{% url 'category-list' %}" class="small text-decoration-none">Manage categories</a>
                                 {% endif %}
                             </div>
