@@ -164,7 +164,7 @@ def dashboard(request):
     messages.error(request, "Please choose a valid account role before using the dashboard.")
     return redirect('job-list')
 
-# --- JOB ACTIONS ---
+
 @login_required
 @require_POST
 def apply_for_job(request, job_id):
