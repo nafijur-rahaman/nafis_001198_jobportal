@@ -13,7 +13,7 @@ from .forms import (
     RecruiterProfileForm, JobSeekerProfileForm, JobPostForm
 )
 
-# --- AUTHENTICATION & PROFILES ---
+
 def register_user(request):
     if request.method == 'POST':
         form = CustomUserRegistrationForm(request.POST)
@@ -44,7 +44,7 @@ def logout_user(request):
 @login_required
 def create_profile(request):
     user = request.user
-    FormClass = RecruiterProfileForm if user.user_type == 'recruiter' else JobSeekerProfileForm
+    FormClass = RecruiterProfileForm if user.role == 'recruiter' else JobSeekerProfileForm
 
     if request.method == 'POST':
         form = FormClass(request.POST, request.FILES)
@@ -55,17 +55,17 @@ def create_profile(request):
             return redirect('job-list')
     else:
         form = FormClass()
-    return render(request, 'portal/create_profile.html', {'form': form, 'user_type': user.user_type})
+    return render(request, 'portal/create_profile.html', {'form': form, 'role': user.role})
 
-# --- DASHBOARDS ---
+
 @login_required
 def dashboard(request):
     user = request.user
-    if user.user_type == 'recruiter':
+    if user.role == 'recruiter':
         my_jobs = JobPost.objects.filter(recruiter=user).order_by('-created_at')
         return render(request, 'portal/recruiter_dashboard.html', {'jobs': my_jobs})
         
-    elif user.user_type == 'jobseeker':
+    elif user.role == 'jobseeker':
         try:
             user_skills = set(x.strip().lower() for x in user.jobseeker_profile.skills_set.split(','))
         except JobSeekerProfile.DoesNotExist:
@@ -81,7 +81,7 @@ def dashboard(request):
 # --- JOB ACTIONS ---
 @login_required
 def apply_for_job(request, job_id):
-    if request.user.user_type != 'jobseeker':
+    if request.user.role != 'jobseeker':
         messages.error(request, "Only job seekers can apply.")
         return redirect('job-list')
 

@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold">Available Opportunities</h2>
+    {% if user.role == 'recruiter' %}
+        <a href="{% url 'job-create' %}" class="btn btn-primary">+ Post New Job</a>
+    {% endif %}
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <form method="GET" class="card shadow-sm border-0 p-3">
+            <div class="input-group">
+                <input type="text" name="q" class="form-control form-control-lg" placeholder="Search jobs by title, category, or skills..." value="{{ request.GET.q }}">
+                <button class="btn btn-dark px-4" type="submit">Search</button>
+                {% if request.GET.q %}
+                    <a href="{% url 'job-list' %}" class="btn btn-outline-secondary">Clear</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row">
+    {% for job in jobs %}
+    <div class="col-md-6 mb-4">
+        <div class="card h-100 shadow-sm border-0">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <h5 class="card-title fw-bold text-primary">{{ job.title }}</h5>
+                    <span class="badge bg-secondary h-50">{{ job.category }}</span>
+                </div>
+                <h6 class="card-subtitle mb-3 text-muted"><i class="bi bi-building"></i> {{ job.recruiter.display_name }}</h6>
+                <p class="card-text text-truncate">{{ job.job_description }}</p>
+                
+                <div class="mb-3 p-2 bg-light rounded">
+                    <small class="text-muted fw-bold">Required Skills:</small> 
+                    <span class="text-dark small">{{ job.required_skills }}</span>
+                </div>
+                
+                <a href="{% url 'job-detail' job.id %}" class="btn btn-outline-primary btn-sm w-100">View Details</a>
+            </div>
+            <div class="card-footer bg-white text-muted small border-0 d-flex justify-content-between">
+                <span>Posted {{ job.created_at|timesince }} ago</span>
+                <span>{{ job.number_of_openings }} openings</span>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center text-muted mt-5">
+        <h4>No jobs found matching your criteria.</h4>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
